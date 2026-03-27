@@ -17,16 +17,6 @@ services:
       - key: APP_NAME
         value: "AEGIS Defense System [RENDER]"
 
-staticSites:
-  - name: aegis-dashboard
-    env: static
-    plan: free
-    publishDir: .
-    headers:
-      - path: /*
-        name: Access-Control-Allow-Origin
-        value: "*"
-
 databases:
   - name: aegis-db
     plan: free
