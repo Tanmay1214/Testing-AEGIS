@@ -25,11 +25,17 @@ class Settings(BaseSettings):
 
     def get_database_url(self, async_mode: bool = True) -> str:
         if self.DATABASE_URL:
-            if async_mode and self.DATABASE_URL.startswith("postgresql://"):
-                return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-            elif not async_mode and self.DATABASE_URL.startswith("postgresql://"):
-                return self.DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
-            return self.DATABASE_URL
+            # Render/managed Postgres often requires sslmode=require
+            url = self.DATABASE_URL
+            if "localhost" not in url and "127.0.0.1" not in url and "sslmode=" not in url:
+                separator = "&" if "?" in url else "?"
+                url += f"{separator}sslmode=require"
+
+            if async_mode and url.startswith("postgresql://"):
+                return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            elif not async_mode and url.startswith("postgresql://"):
+                return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+            return url
         
         driver = "asyncpg" if async_mode else "psycopg2"
         return (
