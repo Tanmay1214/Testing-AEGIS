@@ -57,11 +57,13 @@ async def create_all_tables():
     # Redacted URL for debugging
     from urllib.parse import urlparse
     parsed = urlparse(settings.DATABASE_URL_STR)
-    redacted_host = f"{parsed.hostname}:{parsed.port}" if parsed.hostname else "unknown-host"
+    host = parsed.hostname or "unknown-host"
+    port = parsed.port or 5432
+    redacted_host = f"{host}:{port}"
     
     max_retries = 5
     for attempt in range(1, max_retries + 1):
-        logger.info("Attempting connection to Database host: %s (attempt %d/%d)", redacted_host, attempt, max_retries)
+        logger.info("[FINAL STRIKE] Handshake Attempt %d/%d to host: %s", attempt, max_retries, redacted_host)
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)

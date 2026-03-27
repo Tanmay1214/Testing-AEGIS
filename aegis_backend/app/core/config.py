@@ -26,10 +26,12 @@ class Settings(BaseSettings):
     def get_database_url(self, async_mode: bool = True) -> str:
         if self.DATABASE_URL:
             url = self.DATABASE_URL
+            # Standardizing Render-style postgres protocol to SQLAlchemy-compliant asyncpg
             for scheme in ["postgresql://", "postgres://"]:
                 if url.startswith(scheme):
                     driver = "+asyncpg://" if async_mode else "+psycopg2://"
-                    return url.replace(scheme, f"postgresql{driver}", 1)
+                    # Safely replace only the protocol prefix
+                    return f"postgresql{driver}{url.removeprefix(scheme)}"
             return url
         
         driver = "asyncpg" if async_mode else "psycopg2"

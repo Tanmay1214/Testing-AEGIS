@@ -9,9 +9,7 @@ services:
     healthCheckPath: /api/health-check
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: aegis-db
-          property: connectionString
+        value: "REPLACE_WITH_EXTERNAL_URL_IN_DASHBOARD" # Manual override for DNS stability
       - key: REDIS_URL
         sync: false # Set this value manually from Upstash
       - key: APP_NAME
