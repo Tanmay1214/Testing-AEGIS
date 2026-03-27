@@ -8,12 +8,18 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+# Standard asyncpg SSL logic for production (Render/Managed DB)
+connect_args = {}
+if "localhost" not in settings.DATABASE_URL_STR and "127.0.0.1" not in settings.DATABASE_URL_STR:
+    connect_args["ssl"] = True
+
 engine = create_async_engine(
     settings.DATABASE_URL_STR,
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
+    connect_args=connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(
