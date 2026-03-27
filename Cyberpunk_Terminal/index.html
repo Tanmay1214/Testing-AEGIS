@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>AEGIS_CORE v4.2 // MISSION_CONTROL</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&amp;family=Space+Grotesk:wght@300;400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "error-container": "#93000a",
+            "outline": "#839493",
+            "surface-container-high": "#2a2a2a",
+            "primary-fixed-dim": "#00dddd",
+            "surface": "#131313",
+            "on-primary-fixed": "#002020",
+            "surface-dim": "#131313",
+            "surface-variant": "#353534",
+            "inverse-primary": "#006a6a",
+            "outline-variant": "#3a4a49",
+            "on-background": "#e5e2e1",
+            "secondary-fixed": "#ffd9de",
+            "surface-container-low": "#1c1b1b",
+            "tertiary-container": "#fce442",
+            "on-secondary": "#660028",
+            "error": "#ffb4ab",
+            "on-tertiary": "#383100",
+            "secondary-container": "#e00460",
+            "on-primary-container": "#007070",
+            "surface-container-highest": "#353534",
+            "on-tertiary-fixed": "#201c00",
+            "surface-bright": "#3a3939",
+            "on-tertiary-fixed-variant": "#504700",
+            "tertiary-fixed": "#fce442",
+            "on-surface": "#e5e2e1",
+            "primary": "#ffffff",
+            "on-primary": "#003737",
+            "on-secondary-fixed": "#3f0016",
+            "background": "#050505",
+            "inverse-surface": "#e5e2e1",
+            "on-primary-fixed-variant": "#004f4f",
+            "on-surface-variant": "#b9cac9",
+            "inverse-on-surface": "#313030",
+            "on-error": "#690005",
+            "primary-fixed": "#00fbfb",
+            "secondary": "#ffb2bf",
+            "surface-container-lowest": "#0e0e0e",
+            "tertiary-fixed-dim": "#dec723",
+            "on-tertiary-container": "#716500",
+            "on-secondary-container": "#fff6f6",
+            "tertiary": "#ffffff",
+            "on-error-container": "#ffdad6",
+            "on-secondary-fixed-variant": "#90003b",
+            "surface-tint": "#00dddd",
+            "primary-container": "#00fbfb",
+            "surface-container": "#201f1f",
+            "secondary-fixed-dim": "#ffb2bf"
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk", "monospace"],
+            "body": ["Space Grotesk", "monospace"],
+            "label": ["Space Grotesk", "monospace"],
+            "mono": ["'JetBrains Mono'", "monospace"]
+          },
+          borderRadius: { "DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body
+  class="font-body text-on-surface min-h-screen flex flex-col selection:bg-primary-fixed selection:text-on-primary-fixed">
+  <div class="crt-scanline"></div>
+  <!-- Top Navigation Shell -->
+  <header
+    class="bg-[#050505] text-white font-mono uppercase tracking-tighter text-sm border-b-2 border-[#00fbfb] shadow-[0_0_15px_rgba(0,251,251,0.3)] flex justify-between items-center w-full px-6 py-2 z-50 sticky top-0">
+    <div class="flex items-center gap-4">
+      <span class="material-symbols-outlined text-primary-fixed" data-icon="terminal">terminal</span>
+      <h1 class="text-lg font-black text-white uppercase tracking-widest">&gt;AEGIS_CORE v4.2</h1>
+      <span class="material-symbols-outlined text-[#00fbfb] text-base animate-pulse"
+        data-icon="fingerprint">fingerprint</span>
+    </div>
+    <div class="hidden md:flex gap-8 items-center">
+      <div class="flex gap-1 items-center brightness-125 text-[#00fbfb]">
+        <span class="w-2 h-2 bg-[#00fbfb] block"></span>
+        <span>STATUS: OK</span>
+      </div>
+      <div class="flex gap-1 items-center text-gray-500">
+        <span class="w-2 h-2 bg-gray-500 block"></span>
+        <span>NETWORK: CONNECTED</span>
+      </div>
+    </div>
+  </header>
+  <!-- Main Content Canvas - Centered Layout -->
+  <main class="flex-grow p-4 md:p-8 flex flex-col items-center justify-center">
+    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      <!-- Left Panel: Terminal (7/12) -->
+      <section
+        class="lg:col-span-7 flex flex-col border-2 border-primary-fixed bg-surface-container-lowest glitch-border relative overflow-hidden h-[700px]">
+        <div class="scanline-overlay"></div>
+        <!-- Panel Header -->
+        <div class="bg-primary-fixed px-4 py-1 flex justify-between items-center">
+          <h3 class="text-on-primary-fixed font-bold uppercase tracking-tight text-xs md:text-sm flicker-h3">&gt;TERMINAL_CONSOLE
+          </h3>
+          <div class="flex gap-2">
+            <div class="w-3 h-3 border border-on-primary-fixed"></div>
+            <div class="w-3 h-3 bg-on-primary-fixed"></div>
+          </div>
+        </div>
+        <!-- Panel Content -->
+        <div class="p-6 flex-grow font-mono flex flex-col overflow-y-auto custom-scrollbar relative z-20">
+          <!-- ASCII Logo -->
+          <div class="text-primary-fixed ascii-art mb-8 text-[0.4rem] sm:text-[0.6rem] md:text-[0.8rem] opacity-0 transition-opacity duration-300">
+            <pre class="animate-float" style="
+        text-shadow: 
+            1px 1px 0px #00ffff, 
+            2px 2px 0px #00cccc, 
+            3px 3px 0px #009999, 
+            4px 4px 10px rgba(0,0,0,0.5);
+        transform: skew(-5deg, -2deg);
+        filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.8));
+    ">
+ █████  ███████  ██████  ██ ███████ 
+██   ██ ██      ██       ██ ██      
+███████ █████   ██   ███ ██ ███████ 
+██   ██ ██      ██    ██ ██      ██ 
+██   ██ ███████  ██████  ██ ███████ 
+    </pre>
+          </div>
+          <div class="space-y-1 text-xs md:text-sm opacity-0 transition-opacity duration-300">
+            <p class="text-primary-fixed-dim terminal-glow">
+              [<span id="init-timestamp" class="text-secondary-container">00:00:00</span>]
+              INITIALIZING KERNEL_CORE...
+            </p>
+            <p class="text-white terminal-glow">&gt; BUILD VERSION: 29.03.26</p>
+            <p class="text-white terminal-glow">&gt; OS NAME: AEGIS_CORE v4.2</p>
+            <p class="text-primary-fixed-dim mt-4 terminal-glow">&gt;&gt; SECURE_HANDSHAKE_ESTABLISHED</p>
+            <p class="text-primary-fixed-dim terminal-glow">&gt;&gt; ROOT_DIR: /SYS/USER/ADMIN</p>
+            <p class="text-primary-fixed mt-6 terminal-glow">INITIATING BOOT SEQUENCE...</p>
+            <div class="flex gap-2 items-center mt-2">
+              <span class="text-on-surface-variant">[</span>
+              <div class="flex-grow bg-surface-container-highest h-3">
+                <div class="bg-primary-fixed h-full w-[100%]"></div>
+              </div>
+              <span class="text-on-surface-variant">] 100%</span>
+            </div>
+            <div class="mt-8 space-y-1 opacity-80 text-[10px] md:text-xs">
+              <p class="terminal-glow">&gt; Loading module: neural_net_v3.bin</p>
+              <p class="terminal-glow">&gt; Loading module: optic_sync.sys</p>
+              <p class="terminal-glow">&gt; Loading module: sensory_bypass.dll</p>
+              <p class="terminal-glow">&gt; STACK_OVERFLOW_CHECK... PASSED</p>
+              <p class="terminal-glow">&gt; MEMORY_VIRTUALIZATION... ACTIVE</p>
+
+              <p class="text-primary-fixed terminal-glow">&gt; SYNCHRONIZING WITH NEXUS_CITY_NODE_REGISTRY... OK</p>
+              <p class="text-primary-fixed terminal-glow">&gt; DECODING ENCODED_HARDWARE_HEADERS... [402/402]</p>
+              <p class="text-yellow-400 terminal-glow">&gt; FETCHING CURRENT_SCHEMA_VERSION... SYNCED (V3.2)</p>
+              <p class="text-orange-400 terminal-glow">&gt;&gt; ANALYZING HTTP_PROTOCOL_ANOMALIES... DETECTED</p>
+              <p class="text-red-500 font-bold terminal-glow">&gt;&gt; ALERT: DATA_CONFLICT FOUND (JSON_OK != HTTP_ERROR)</p>
+            </div>
+          </div>
+          <!-- Terminal Input & Button Area -->
+          <div class="mt-auto pt-6 border-t-2 border-primary-fixed/20 opacity-0 transition-opacity duration-1000">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-primary-fixed font-bold">&gt;</span>
+              <div class="w-3 h-5 bg-primary-fixed animate-pulse"></div>
+              <span class="text-on-surface-variant italic text-xs">AEGIS_DEFENSE_CONSOLE_READY. AWAITING
+                OPERATOR...</span>
+            </div>
+            <button
+              class="w-full bg-secondary-container text-on-secondary-container py-3 text-lg font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(224,4,96,0.4)] hover:brightness-125 transition-all group flex items-center justify-center gap-4 btn-glitch">
+              <span class="text-xs opacity-50 group-hover:translate-x-1 transition-transform">&gt;&gt;&gt;</span>
+              &gt;&gt;LAUNCH&lt;&lt;
+              <span class="text-xs opacity-50 group-hover:-translate-x-1 transition-transform">&lt;&lt;&lt;</span>
+            </button>
+          </div>
+        </div>
+      </section>
+      <!-- Right Panels: Tiled Modules (5/12) -->
+      <aside class="lg:col-span-5 flex flex-col gap-6">
+        <!-- Module 1: >EVENTS -->
+        <section
+          class="flex-grow border-2 border-primary-fixed bg-surface-container glitch-border overflow-hidden flex flex-col min-h-[220px]">
+          <div class="bg-primary-fixed px-3 py-1 flex justify-between items-center">
+            <h3 class="text-on-primary-fixed font-bold text-xs uppercase tracking-widest flicker-h3">&gt;EVENTS</h3>
+            <span class="material-symbols-outlined text-on-primary-fixed text-sm"
+              data-icon="event_note">event_note</span>
+          </div>
+          <div id="event-logs-container"
+            class="p-4 flex flex-col gap-3 font-mono text-xs overflow-y-auto custom-scrollbar flex-grow">
+            <!-- Logs will be injected here -->
+          </div>
+          <div class="px-4 pb-4">
+            <div class="h-2 w-full bg-surface-container-high relative overflow-hidden mt-1">
+              <div class="absolute inset-0 bg-primary-fixed/10"></div>
+              <div id="events-progress-bar" class="absolute h-full bg-primary-fixed w-0 pulse-bar transition-all duration-300"></div>
+            </div>
+            <p id="events-progress-status" class="text-[8px] text-primary-fixed/50 font-mono mt-1 text-right uppercase tracking-widest">
+              System_Scanning...</p>
+          </div>
+        </section>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
+          <!-- Module 2: >SETTINGS -->
+          <section
+            class="border-2 border-primary-fixed bg-surface-container glitch-border overflow-hidden flex flex-col">
+            <div class="bg-primary-fixed px-3 py-1 flex justify-between items-center">
+              <h3 class="text-on-primary-fixed font-bold text-xs uppercase tracking-widest flicker-h3">&gt;SETTINGS</h3>
+              <span class="material-symbols-outlined text-on-primary-fixed text-sm" data-icon="settings">settings</span>
+            </div>
+            <div id="settings-rows" class="p-2 flex flex-col gap-2 font-mono text-[10px] md:text-xs">
+
+              <div class="flex items-center justify-between opacity-0 transition-opacity duration-300">
+                <span class="text-on-surface-variant">MOD_STATE:</span>
+                <div class="flex gap-1">
+                  <span class="bg-secondary-container text-white px-2 py-1">[ACTIVE]</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between opacity-0 transition-opacity duration-300">
+                <span class="text-on-surface-variant">SCHEMA_SYNC:</span>
+                <div class="flex gap-1">
+                  <span class="bg-primary-fixed text-on-primary-fixed px-2 py-1">[LOCKED]</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between opacity-0 transition-opacity duration-300">
+                <span class="text-on-surface-variant">DECODER_LOGIC:</span>
+                <div class="flex gap-1">
+                  <span class="bg-primary-fixed text-on-primary-fixed px-2 py-1">[AUTO]</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between opacity-0 transition-opacity duration-300">
+                <span class="text-on-surface-variant">SCAN_INTENSITY:</span>
+                <div class="flex gap-1">
+                  <span class="bg-secondary-container text-white px-2 py-1">[HIGH]</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between opacity-0 transition-opacity duration-300">
+                <span class="text-on-surface-variant">ANOMALY_THRESHOLD:</span>
+                <div class="flex gap-1">
+                  <span class="bg-primary-fixed text-on-primary-fixed px-2 py-1">[0.85]</span>
+                </div>
+              </div>
+
+            </div>
+          </section>
+          <!-- Module 3: >WHOAMI -->
+          <section
+            class="border-2 border-primary-fixed bg-surface-container-low glitch-border overflow-hidden flex flex-col">
+            <div class="bg-primary-fixed px-3 py-1 flex justify-between items-center">
+              <h3 class="text-on-primary-fixed font-bold text-xs uppercase tracking-widest flicker-h3">&gt;WHOAMI</h3>
+              <span class="material-symbols-outlined text-on-primary-fixed text-sm"
+                data-icon="fingerprint">fingerprint</span>
+            </div>
+            <div class="p-4 flex flex-col md:flex-row gap-4 font-mono">
+              <div class="flex-shrink-0">
+                <div class="w-14 h-14 border-2 border-primary-fixed p-1 bg-surface-container-lowest overflow-hidden">
+                  <img alt="System Avatar"
+                    class="w-full h-full object-cover grayscale brightness-150 contrast-125 avatar-glitch"
+                    data-alt="High contrast stylized glitched portrait" src="avatar.png" />
+                </div>
+              </div>
+              <div id="whoami-rows" class="space-y-1 text-[10px] md:text-xs overflow-hidden">
+                <p class="text-[#e00460] font-black mb-1 truncate uppercase opacity-0 transition-all">UNIT: Code Blooded</p>
+                <div class="flex gap-2 opacity-0 transition-all">
+                  <span class="text-primary-fixed opacity-60">OPERATIVES:</span>
+                  <span class="text-[#00fbfb] font-bold">TANMAY, ANVAY, DEVESH, AARIN</span>
+                </div>
+                <div class="flex gap-2 opacity-0 transition-all">
+                  <span class="text-primary-fixed opacity-60">LOCATION:</span>
+                  <span class="text-[#00fbfb] font-bold">LNMIIT JAIPUR</span>
+                </div>
+                <div class="flex gap-2 opacity-0 transition-all">
+                  <span class="text-primary-fixed opacity-60">LOCAL_LINK:</span>
+                  <span class="text-white" id="link-address">STABLE</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
+  </main>
+  <!-- Mobile Navigation Bar - Minimal -->
+  <nav
+    class="md:hidden fixed bottom-0 left-0 w-full bg-surface-container-lowest border-t-2 border-primary-fixed flex justify-around p-3 z-50">
+    <button class="flex flex-col items-center text-primary-fixed">
+      <span class="material-symbols-outlined text-xl" data-icon="terminal">terminal</span>
+      <span class="text-[8px] mt-1 font-bold">TERMINAL</span>
+    </button>
+    <button class="flex flex-col items-center text-on-surface-variant opacity-60">
+      <span class="material-symbols-outlined text-xl" data-icon="event_note">event_note</span>
+      <span class="text-[8px] mt-1">LOGS</span>
+    </button>
+    <button class="flex flex-col items-center text-on-surface-variant opacity-60">
+      <span class="material-symbols-outlined text-xl" data-icon="settings">settings</span>
+      <span class="text-[8px] mt-1">SYS</span>
+    </button>
+  </nav>
+  <!-- Decorative Overlay elements -->
+  <div class="fixed top-20 right-10 pointer-events-none opacity-20 hidden lg:block">
+    <div class="text-[10px] font-mono text-primary-fixed space-y-1 text-right">
+      <p>SYS_LOAD: 42%</p>
+      <p>VRAM_USAGE: 12GB</p>
+      <p>THREAD_COUNT: 1024</p>
+      <p>BUFFER_STATUS: NOMINAL</p>
+    </div>
+  </div>
+  <div class="fixed bottom-20 left-10 pointer-events-none opacity-20 hidden lg:block">
+    <div class="text-[10px] font-mono text-primary-fixed space-y-1">
+      <p>LATENCY: 14MS</p>
+      <p>PACKET_LOSS: 0%</p>
+      <p>SECURE_AUTH: VALID</p>
+    </div>
+  </div>
+  <script src="script.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: aegis-api
+    env: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health-check
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aegis-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false # Set this value manually from Upstash
+      - key: APP_NAME
+        value: "AEGIS Defense System [RENDER]"
+
+databases:
+  - name: aegis-db
+    plan: free

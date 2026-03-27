@@ -1,0 +1,18 @@
+# environment
+.env
+
+# python
+__pycache__/
+*.pyc
+
+# datasets
+data/*.csv
+
+# vscode
+.vscode/
+
+# OS
+.DS_Store
+
+# logs
+*.log
