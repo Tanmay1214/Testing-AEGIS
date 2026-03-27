@@ -69,7 +69,7 @@ if (typeof tailwind !== 'undefined') {
 // 2. Core State & Fetching
 const API_BASE = window.location.origin.includes('localhost') 
     ? "http://localhost:8000/api" 
-    : window.location.origin.replace('dashboard', 'api') + "/api"; // Heuristic for Railway/Render environments
+    : window.location.origin.replace('dashboard-aegis', 'aegis-api') + "/api"; // Tuned for Render blueprint subdomains
 let dashboardData = null;
 let visibleNodeLimit = 50;
 
