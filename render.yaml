@@ -17,11 +17,11 @@ services:
       - key: APP_NAME
         value: "AEGIS Defense System [RENDER]"
 
-  - type: static
+  - type: web
     name: aegis-dashboard
     env: static
     plan: free
-    publishPath: .
+    publishDir: .
     headers:
       - path: /*
         name: Access-Control-Allow-Origin
