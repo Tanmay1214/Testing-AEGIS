@@ -182,6 +182,7 @@ class LogEntry(BaseModel):
     node_id: int
     message: str
     status: str
+    http_code: int
 
 
 class DashboardAggregationResponse(BaseModel):

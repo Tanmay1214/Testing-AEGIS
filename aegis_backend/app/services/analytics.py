@@ -389,7 +389,8 @@ async def get_dashboard_state(session: AsyncSession, full: bool = False) -> Dash
             timestamp=l.ingested_at.isoformat() if l.ingested_at else _now().isoformat(),
             node_id=l.node_id,
             message=f"Forensic Packet Recv: {l.http_response_code} | RT={l.response_time_ms}ms",
-            status=l.http_status_label
+            status=l.http_status_label,
+            http_code=l.http_response_code
         ) for l in latest_logs
     ]
 

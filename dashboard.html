@@ -158,7 +158,7 @@
         <!-- PANEL 2: TOP-RIGHT (Schema Sync Console) -->
         <section
             class="col-span-12 lg:col-span-5 row-span-4 cyber-border bg-surface-container-lowest flex flex-col overflow-hidden">
-            <div class="bg-primary-fixed px-3 py-1 flex justify-between items-center">
+            <div class="bg-primary-fixed px-3 py-1 flex justify-between items-center relative">
                 <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-[#002020] text-sm">sync_alt</span>
                     <h3 class="text-on-primary-fixed font-bold text-xs uppercase tracking-widest flicker-h3">
@@ -183,9 +183,30 @@
                     </div>
                 </div>
             </div>
-            <div class="flex-grow bg-black p-4 font-mono text-[11px] leading-tight cyber-scrollbar overflow-y-auto"
-                id="consoleOutput">
-                <div class="text-white mb-1 animate-pulse" id="consoleCursor">_█</div>
+            <div class="flex-grow relative bg-black overflow-hidden flex flex-col">
+                <div class="flex-grow p-4 font-mono text-[11px] leading-tight cyber-scrollbar overflow-y-auto"
+                    id="consoleOutput">
+                    <div class="text-white mb-1 animate-pulse" id="consoleCursor">_█</div>
+                </div>
+                
+                <!-- Bottom-Right Status Protocol (Text-Only) -->
+                <div class="absolute bottom-2 right-6 flex flex-col gap-1 bg-[#050505]/95 px-3 py-2 border border-[#00FBFB]/20 rounded-sm shadow-[0_0_10px_rgba(0,0,0,1)] z-40 backdrop-blur-md pointer-events-none">
+                    <div class="flex items-center justify-between gap-6 border-b border-[#00FBFB]/10 pb-1 mb-1">
+                        <span class="text-[8px] text-[#00FBFB] font-black tracking-widest uppercase opacity-70">Protocol_Registry</span>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span class="text-[9px] text-[#00FBFB] font-bold">429</span>
+                        <span class="text-[9px] text-white opacity-90 italic">DDoS_THREAT</span>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span class="text-[9px] text-[#00FBFB] font-bold">206</span>
+                        <span class="text-[9px] text-white opacity-90 italic">HIJACK_DETECT</span>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span class="text-[9px] text-[#00FBFB] font-bold">200</span>
+                        <span class="text-[9px] text-white opacity-90 italic">OPERATIONAL</span>
+                    </div>
+                </div>
             </div>
         </section>
         <!-- PANEL 4: BOTTOM-RIGHT (Heatmap/Latency Chart) -->
