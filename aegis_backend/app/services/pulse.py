@@ -44,12 +44,13 @@ async def forensic_autonomous_pulse(app):
         return
 
     iteration = 0
+    consecutive_failures = 0
     # Pre-calculate schema rotation boundary
     rotation_id = settings.SCHEMA_ROTATION_LOG_ID # 5000
 
     while True:
         try:
-            # Batch size 50 every 2 seconds (~25 pkts/sec) to stay within free-tier limits
+            # Batch size 50 every 0.5s (~100 pkts/sec)
             batch_size = 50
             batch_data = []
             
@@ -63,7 +64,6 @@ async def forensic_autonomous_pulse(app):
                 row = df_logs.iloc[idx]
                 
                 # Dynamic Schema Logic: Resolve effective_load based on current ID
-                # (Mirroring the logic in routes.py:188)
                 est_id = current_max_id + i + 1
                 is_v2 = (est_id // 5000) % 2 == 1
                 
@@ -78,8 +78,6 @@ async def forensic_autonomous_pulse(app):
                     "response_time_ms": int(row['response_time_ms']),
                     "load_val": float(row['load_val']) if pd.notnull(row['load_val']) else None,
                     "l_v1": float(row['L_V1']) if pd.notnull(row['L_V1']) else None,
-                    # We inject effective_load for the ML scoring helper, 
-                    # even though it's not a DB column (we'll pop it before insert)
                     "_eff_load": eff_load 
                 }
                 batch_data.append(log_dict)
@@ -99,8 +97,6 @@ async def forensic_autonomous_pulse(app):
                 
                 # 2. ML Scoring (if models loaded)
                 if hasattr(app.state, "models") and app.state.models:
-                    # Adapt data for score_log_batch
-                    # It expects objects with .response_time_ms, .http_response_code, .effective_load
                     class MockLog:
                         def __init__(self, d):
                             self.response_time_ms = d["response_time_ms"]
@@ -127,14 +123,20 @@ async def forensic_autonomous_pulse(app):
                 
                 await session.commit()
             
-            if iteration % 20 == 0:
-                logger.info("AUTONOMOUS_PULSE_SYNC [%06d]: Batch commit successful. (Total Logs: %d)", 
-                            iteration * batch_size, current_max_id + batch_size)
+            # Reset failsafe counter on success
+            consecutive_failures = 0
             
-        except Exception as e:
-            logger.error("AUTONOMOUS_PULSE_GLITCH: %s", e)
-            await asyncio.sleep(10) # Heavy backoff on error
+            if iteration % 20 == 0:
+                logger.debug("AUTONOMOUS_PULSE_SYNC [%06d]: Batch commit successful.", iteration * batch_size)
+            
+            iteration += 1
+            await asyncio.sleep(0.5) # Overclocked Cadence: 100 logs/sec
 
-        iteration += 1
-        await asyncio.sleep(0.5) # Overclocked Cadence: 100 logs/sec (50 per batch)
+        except Exception as e:
+            consecutive_failures += 1
+            # Exponential Backoff: 10s, 20s, 40s, max 60s
+            backoff = min(10 * (2 ** (consecutive_failures - 1)), 60)
+            logger.error("AUTONOMOUS_PULSE_GLITCH [%d]: Connection refused. Retrying in %ds. Error: %s", 
+                         consecutive_failures, backoff, e)
+            await asyncio.sleep(backoff)
 

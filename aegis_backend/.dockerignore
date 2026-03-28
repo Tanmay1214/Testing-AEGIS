@@ -1,0 +1,28 @@
+# AEGIS Forensic Exclusions
+# Ignore local database and persistence data
+postgres_data/
+
+# Ignore Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.toast
+.pytest_cache/
+
+# Ignore local env and history
+.env
+.git/
+.gitignore
+README.md
+
+# Ignore Docker related artifacts
+Dockerfile
+docker-compose.yml
+.dockerignore
