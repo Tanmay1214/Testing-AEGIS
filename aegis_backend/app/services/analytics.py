@@ -53,7 +53,16 @@ async def get_city_map(session: AsyncSession) -> CityMapResponse:
     if cached:
         return CityMapResponse(**cached)
 
-    # Latest HTTP code per node
+    # 1. Determine current window start (Sliding Forensic Window: last 5000 pkts)
+    max_id_stmt = select(func.max(SystemLog.log_id))
+    current_max_id = (await session.execute(max_id_stmt)).scalar() or 0
+    window_start = (current_max_id // 5000) * 5000
+
+    # 2. Identify nodes with anomalies in the current window
+    inf_stmt = select(func.distinct(AnomalyRecord.node_id)).where(AnomalyRecord.log_id >= window_start)
+    inf_nodes = set((await session.execute(inf_stmt)).scalars().all())
+
+    # 3. Latest HTTP code per node
     subq = (
         select(
             SystemLog.node_id,
@@ -67,7 +76,6 @@ async def get_city_map(session: AsyncSession) -> CityMapResponse:
         select(
             Node.node_uuid,
             Node.serial_number,
-            Node.is_infected,
             SystemLog.http_response_code,
         )
         .join(subq, Node.node_uuid == subq.c.node_id)
@@ -90,7 +98,7 @@ async def get_city_map(session: AsyncSession) -> CityMapResponse:
             serial_number=row.serial_number,
             http_status_label=label,
             http_response_code=code,
-            is_infected=row.is_infected,
+            is_infected=(row.node_uuid in inf_nodes),
         ))
 
     response = CityMapResponse(total=len(nodes), nodes=nodes, generated_at=_now())
@@ -341,24 +349,31 @@ async def get_dashboard_state(session: AsyncSession, full: bool = False) -> Dash
     )
     statuses = {s.node_id: s for s in (await session.execute(status_stmt)).scalars().all()}
 
+    # 2. Identify nodes with anomalies in the current window (Hard-Sync)
+    inf_stmt = select(func.distinct(AnomalyRecord.node_id)).where(AnomalyRecord.log_id >= window_start_id)
+    inf_nodes = set((await session.execute(inf_stmt)).scalars().all())
+
     import random # for visual variety if pos not set
     dashboard_nodes = []
-    
-    # In Light Mode (full=False), the user wants ZERO nodes (they are cached in UI)
-    if full:
-        for n in nodes_rows:
-            s = statuses.get(n.node_uuid)
-            node_data = {
-                "id": n.node_uuid,
-                "is_infected": n.is_infected,
-                "conflict_detected": False,
-                "last_http_code": s.http_response_code if s else 200,
-                "reported_json": s.json_status if s else "OPERATIONAL",
+    for n in nodes_rows:
+        s = statuses.get(n.node_uuid)
+        # Always send status updates; only send heavy metadata (pos, serial, ua) if full=True
+        node_data = {
+            "id": n.node_uuid,
+            "is_infected": (n.node_uuid in inf_nodes),
+            "conflict_detected": False,
+            "last_http_code": s.http_response_code if s else 200,
+            "reported_json": s.json_status if s else "OPERATIONAL",
+        }
+        
+        if full:
+            node_data.update({
                 "pos": {"x": getattr(n, 'pos_x', random.uniform(5, 95)), "y": getattr(n, 'pos_y', random.uniform(5, 95))},
                 "decoded_serial": n.serial_number,
                 "encoded_ua": n.user_agent,
-            }
-            dashboard_nodes.append(DashboardNode(**node_data))
+            })
+        
+        dashboard_nodes.append(DashboardNode(**node_data))
 
     # 4. Heatmap
     heatmap_data = await get_heatmap(session)
@@ -390,7 +405,7 @@ async def get_dashboard_state(session: AsyncSession, full: bool = False) -> Dash
         schema_engine=SchemaEngineState(
             current_version=schema_info.current_version,
             active_column=schema_info.current_column,
-            rotation_timer=f"-{total_logs % 5000:04d}_PKTS",
+            rotation_timer=f"-{(5000 - (total_logs % 5000)) if (total_logs % 5000) != 0 else 5000:04d}_PKTS",
             sync_status=f"{schema_info.current_column}_LOCKED"
         ),
         nodes=dashboard_nodes,

@@ -102,10 +102,18 @@ async function fetchDashboardData() {
             });
             isFirstLoad = false;
             activeSchemaVersion = data.schema_engine.current_version;
-        } else if (data.nodes && data.nodes.length > 0) {
+        }
+
+        // 1. Check for Version Shift FIRST
+        if (data.schema_engine.current_version !== activeSchemaVersion) {
+            triggerSchemaRotation(data.schema_engine.current_version);
+        }
+
+        // 2. Diff Sync Nodes (Only update status for existing nodes)
+        if (data.nodes && data.nodes.length > 0) {
             const newAnomalyIds = new Set();
             data.nodes.forEach(incomingNode => {
-                newAnomalyIds.add(incomingNode.id);
+                if (incomingNode.is_infected) newAnomalyIds.add(incomingNode.id);
                 let existing = dashboardData.nodes.find(n => n.id === incomingNode.id);
                 if (existing) {
                     existing.is_infected = incomingNode.is_infected;
@@ -113,31 +121,14 @@ async function fetchDashboardData() {
                     existing.reported_json = incomingNode.reported_json;
                 }
             });
-
-            lastAnomalyNodeIds.forEach(oldId => {
-                if (!newAnomalyIds.has(oldId)) {
-                    let recovered = dashboardData.nodes.find(n => n.id === oldId);
-                    if (recovered) {
-                        recovered.is_infected = false;
-                        recovered.last_http_code = 200;
-                        recovered.reported_json = "OPERATIONAL";
-                    }
-                }
-            });
             lastAnomalyNodeIds = newAnomalyIds;
         }
 
-        if (data.schema_engine.current_version !== activeSchemaVersion) {
-            triggerSchemaRotation();
-        }
-
-        if (!isFirstLoad) {
-            dashboardData.metadata = data.metadata;
-            dashboardData.schema_engine = data.schema_engine;
-            dashboardData.heatmap = data.heatmap;
-            dashboardData.terminal_logs = data.terminal_logs;
-            activeSchemaVersion = data.schema_engine.current_version;
-        }
+        // 3. Update Global Meta
+        dashboardData.metadata = data.metadata;
+        dashboardData.schema_engine = data.schema_engine;
+        dashboardData.heatmap = data.heatmap;
+        dashboardData.terminal_logs = data.terminal_logs;
 
         if (dashboardData.metadata.total_logs_processed > lastKnownLogs) {
             lastKnownLogs = dashboardData.metadata.total_logs_processed;
@@ -501,17 +492,44 @@ function updatePacketCounter() {
     if (!dashboardData) return;
     const display = document.getElementById('packetCount'), bar = document.getElementById('packetBar');
     if(!display || !bar) return;
-    let pkts = Math.abs(parseInt(dashboardData.schema_engine.rotation_timer.replace('_PKTS', '')));
-    let rem = 5000 - pkts; if (isNaN(rem)) rem = 0;
+    
+    // Base 'remaining' packets from backend (e.g. 4300)
+    let baseRem = Math.abs(parseInt(dashboardData.schema_engine.rotation_timer.replace('_PKTS', '')));
+    
+    // Real-time packets remaining (taking manual nudge into account)
+    let rem = Math.max(0, baseRem - localLogOffset);
+    if (rem === 0 && baseRem > 0) rem = 5000; // Reset handling
+
+    // Progress bar shows progress in current window (counting up to 5000)
+    let progress = (5000 - rem) % 5000;
+    
     display.innerText = rem.toString().padStart(4, '0');
-    bar.style.width = `${Math.min(100, (pkts / 5000) * 100)}%`;
-    if (rem < 500) { bar.classList.remove('bg-primary-container'); bar.style.backgroundColor = '#fd9000'; bar.style.boxShadow = '0 0 10px #fd9000'; }
-    else { bar.classList.add('bg-primary-container'); bar.style.backgroundColor = ''; bar.style.boxShadow = ''; }
+    bar.style.width = `${Math.min(100, (progress / 5000) * 100)}%`;
+    
+    if (rem < 500) { 
+        bar.classList.remove('bg-primary-container'); 
+        bar.style.backgroundColor = '#fd9000'; 
+        bar.style.boxShadow = '0 0 10px #fd9000'; 
+    } else { 
+        bar.classList.add('bg-primary-container'); 
+        bar.style.backgroundColor = ''; 
+        bar.style.boxShadow = ''; 
+    }
 }
 
-function triggerSchemaRotation() {
-    activeSchemaVersion = activeSchemaVersion === 1 ? 2 : 1;
-    document.body.classList.add('glitch-active'); setTimeout(() => document.body.classList.remove('glitch-active'), 1000);
+function triggerSchemaRotation(newVersion) {
+    activeSchemaVersion = newVersion;
+    
+    // TACTICAL STATE FLUSH: Wipe infection flags across 500 nodes locally
+    if (dashboardData && dashboardData.nodes) {
+        dashboardData.nodes.forEach(n => { n.is_infected = false; n.last_http_code = 200; });
+    }
+    lastAnomalyNodeIds = new Set();
+    
+    // VISUAL GLITCH
+    document.body.classList.add('glitch-active'); 
+    setTimeout(() => document.body.classList.remove('glitch-active'), 1000);
+    
     const console = document.getElementById('consoleOutput');
     if(console) {
         const div = document.createElement('div');
