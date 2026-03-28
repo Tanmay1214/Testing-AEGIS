@@ -1,123 +1,251 @@
-# AEGIS Cyber Infrastructure Defense 🛡️🛰️
+# AEGIS Backend — Cyber-Infrastructure Defense System
 
-**Team:** Code-Blooded  
-**Mission:** To protect Nexus City using a high-performance, autonomous, cloud-native forensic intelligence platform.
-
-AEGIS (Autonomous Experimental Grid Intelligence System) is a complete full-stack cybersecurity dashboard engineered for real-time anomaly detection, node health monitoring, and automated forensic ingestion. Built for the hackathon, AEGIS simulates a **100 packets/sec** telemetry data stream, analyzes it using machine learning models, and visualizes network health through an immersive, cyberpunk-themed web dashboard.
-
----
-
-## 🌟 Hackathon Highlights & Features
-
-1. **Overclocked Autonomous Telemetry Pulse** 🌀  
-   An in-process background worker runs silently alongside the FastAPI server, pulling forensic data from local manifests and pushing telemetry into the cloud database at **100 packets/sec**—simulating high-velocity traffic 24/7 without requiring external paid workers.
-2. **Machine Learning "Brain"** 🧠  
-   Integrated `IsolationForest` (unsupervised) and `XGBoost` (supervised) models scan all incoming logs in real-time, assigning anomaly scores and generating an Alert Ticker for malicious activity.
-3. **Immersive Cyberpunk Dashboard** 🌃  
-   A pure Vanilla HTML/JS/CSS frontend featuring a CRT scanline overlay, dynamic network heatmaps, smooth staggered layout animations, and typing terminal effects.
-4. **Intelligent Schema Rotation & Master Sync** 🔄  
-   The ingestion engine handles high-velocity `V1`/`V2` schema shifts, perfectly synchronized using **Master Sequence ID** windowing to ensure 100% accuracy in threat counts and glitch triggers.
-5. **Cloud-Native Resilience** ⚡  
-   Engineered for managed PostgreSQL with `asyncpg`, featuring a custom 5-attempt retry loop and automatic sequence calibration to ensure flawless startups on cloud infrastructure.
+> **Project AEGIS** — Identify the "Shadow Controller" infiltrating Nexus City's infrastructure
+> by cutting through deceptive telemetry data to expose real attack patterns.
+>
+> Built by **Code Blooded** — Tanmay, Anvay, Devesh, Aarin @ LNMIIT Jaipur
 
 ---
 
-## 📸 Visual Interface
+## Architecture
 
-### 🌀 1. AEGIS Initial Boot Sequence (Landing)
-The sequence begins with an immersive terminal-style boot-up, featuring staggered animations and a typewriter effect as the AEGIS Core initializes.
-![AEGIS Landing Screen](aegis_backend/assets/screenshots/landing.png)
+```
+Data Sources  →  Ingestion Layer      →  Processing Layer  →  Detection Brain        →  Storage      →  API Layer
+(CSVs/Stream)    (FastAPI + Pipeline)     (Pandas/Polars)      (Rules + IsoForest)      (PG + Redis)    (FastAPI)
+```
 
-### 🛰️ 2. High-Velocity Forensic Dashboard
-Once launched, the operator is granted access to the real-time telemetry suite, featuring node maps, anomaly heatmaps, and a 100 log/sec ingestion stream.
-![AEGIS Forensic Dashboard](aegis_backend/assets/screenshots/dashboard.png)
+### Detection Stack
+
+```
+Raw Telemetry
+     │
+     ▼
+┌─────────────────────────────────────────┐
+│           INGESTION PIPELINE            │
+│  LogAdapter → Preprocessor → Router    │
+│  RegistryAdapter (Base64 decode)        │
+│  SchemaAdapter (v1/v2 rotation)         │
+└─────────────────────────────────────────┘
+     │
+     ▼
+┌─────────────────────────────────────────┐
+│         RULE-BASED DETECTION ENGINE     │
+│                                         │
+│  Rule 1 → DDoS Detector                 │
+│           (429 spikes per node > 5x)    │
+│                                         │
+│  Rule 2 → Latency Anomaly Detector      │
+│           (response_time_ms > 200ms)    │
+│                                         │
+│  Rule 3 → Status Mismatch Detector      │
+│           (OPERATIONAL lie detection)   │
+│                                         │
+│  Rule 4 → Infected Node Detector        │
+│           (registry cross-reference)    │
+└─────────────────────────────────────────┘
+     │
+     ▼
+┌─────────────────────────────────────────┐
+│         ML DETECTION LAYER              │
+│  IsolationForest on:                    │
+│  response_time_ms + http_code + load    │
+└─────────────────────────────────────────┘
+     │
+     ▼
+  ThreatAlert  (severity + evidence + details)
+```
 
 ---
 
-## 🧠 Deep Dive: The Backend Intelligence (`aegis_backend`)
+## Project Structure
 
-The `aegis_backend` is the asynchronous "Brain" of the entire application. Built primarily with Python 3.10+ and FastAPI, it is engineered to process massive telemetry logs (**100 logs/sec**), hunt for cybersecurity anomalies using Machine Learning, and serve data to the frontend in real-time.
-
-### 1. The Autonomous Pulse Generator (`app/services/pulse.py`)
-Instead of relying on external cron jobs, paid scripts, or manual triggers, this backend features a self-sustaining in-process background worker. Every **0.5 seconds**, it streams a batch of 50 telemetry logs into PostgreSQL (**100 logs/sec**). This guarantees a true **Zero-Cost 24/7 Live Feed**.
-
-### 2. The Machine Learning Engine (`app/ml/detector.py`)
-During data insertion, the stream is continuously evaluated by the Anomaly Detection Engine:
-- **XGBoost Classifier**: Scans the payload for known threat patterns (Supervised).
-- **Isolation Forest**: Hunts for bizarre behavior and outliers (Unsupervised).
-Logs with highly abnormal `response_time_ms` or `load_val` metrics are flagged as "ANOMALY" and intercepted into a dedicated threat table.
-
-### 3. Forensic Ingestion & Schema Rotation (`app/services/ingestion.py`)
-Real-world cybersecurity data structures evolve dynamically. To simulate this, the ingest engine monitors the data stream for **Schema Evolution**. It automatically determines if an incoming packet requires the "V1" or "V2" schema structure and formats it properly before database insertion.
-
-### 4. Asynchronous Resilience (`app/core/database.py`)
-Powered by `SQLAlchemy` combined with the `asyncpg` driver, the API is entirely non-blocking. To harden the system for cloud deployments, the database initialization features a robust 5-attempt retry-backoff handshake to survive transient cloud DNS latency.
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend:** Python, FastAPI, SQLAlchemy (Async), Uvicorn, Scikit-Learn, XGBoost.
-- **Frontend:** Vanilla HTML5, CSS3, JavaScript (Fetch API).
-- **Database:** PostgreSQL (Render Managed Provider / Local Docker).
-- **Cache / Message Broker:** Redis (Upstash / Local Docker).
-
----
-
-## 🚀 Local Deployment (Docker-First) 🐳
-
-For maximum accuracy, performance, and efficiency, the AEGIS system is designed to run in a fully containerized environment using **Docker**. This ensures a literal "One-Command" setup with local PostgreSQL and Redis instances, providing zero-latency data ingestion.
-
-### Prerequisites
-- **Docker Desktop** installed and running.
+```
+aegis_backend/
+├── app/
+│   ├── api/
+│   │   ├── routes.py          # Core FastAPI route handlers
+│   │   └── alert_routes.py    # Day 2: Threat alert endpoints (NEW)
+│   ├── core/                  # Config, DB, Redis, startup
+│   ├── models/
+│   │   ├── orm.py             # SQLAlchemy ORM (Node, SystemLog, AnomalyRecord)
+│   │   └── schemas.py         # Pydantic response schemas
+│   ├── services/
+│   │   ├── ingestion.py       # CSV loading + Base64 decoding + schema rotation
+│   │   ├── analytics.py       # City map, heatmap, schema console logic
+│   │   ├── forensics.py       # Cloned identity detection
+│   │   └── detection_engine.py  # Day 2: 4 rule-based detectors (NEW)
+│   └── ml/
+│       └── detector.py        # IsolationForest inference
+├── data/
+│   ├── system_logs.csv        # 10,000 telemetry events (schema split at log_id=5000)
+│   ├── node_registry.csv      # 500 nodes (70 infected, serials Base64 encoded)
+│   └── schema_config.csv      # 2 schema versions (load_val → L_V1)
+├── scripts/
+│   ├── train_model.py         # Train IsolationForest + save to data/models/
+│   └── seed_db.py             # Load CSVs → decode → bulk insert PostgreSQL
+├── tests/
+│   └── test_detection_engine.py  # pytest suite for all 4 detectors (NEW)
+├── main.py
+├── requirements.txt
+└── docker-compose.yml
+```
 
 ---
 
-### Step 1: Engage the Mission Stack 🌀
-From the root of the project, navigate to the backend and launch the entire defense architecture:
+## Quick Start
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Start infrastructure (PostgreSQL + Redis)
+docker-compose up -d
+
+# 3. Train the ML model
+python scripts/train_model.py
+
+# 4. Seed the database (loads CSVs, decodes serials, runs IsolationForest)
+python scripts/seed_db.py
+
+# 5. Start the API server
+uvicorn main:app --reload --port 8000
+```
+
+API docs available at: `http://localhost:8000/docs`
+
+---
+
+## API Endpoints
+
+### Core Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | System health — DB, Redis, ML model status |
+| GET | `/api/nodes` | All 500 nodes with decoded serial numbers |
+| GET | `/api/nodes/{node_id}/status` | Full forensic status for a single node |
+| GET | `/api/city-map` | All nodes colored by TRUE HTTP status (not JSON label) |
+| GET | `/api/heatmap` | Response-time heatmap — identifies sleeper malware nodes |
+| GET | `/api/schema-console` | Active schema version (cookie-based log_id lookup) |
+| GET | `/api/anomalies` | ML-detected anomalous nodes (IsolationForest) |
+| POST | `/api/ingest` | Ingest a new log entry + run live ML inference |
+| GET | `/api/forensics/cloned-identities` | Nodes sharing the same decoded serial number |
+
+### Threat Detection Endpoints (Day 2)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/alerts` | All ThreatAlerts from all 4 rule-based detectors |
+| GET | `/api/alerts?severity=CRITICAL` | Filter alerts by severity |
+| GET | `/api/alerts?threat_type=DDOS` | Filter alerts by detector type |
+| GET | `/api/alerts?node_id=80` | All alerts for a specific node |
+| GET | `/api/threat-summary` | Aggregated counts + top 5 offending nodes |
+| GET | `/api/infected-nodes` | CRITICAL: known-infected nodes with live traffic |
+
+### Sample `/api/threat-summary` Response
+
+```json
+{
+  "total_alerts": 312,
+  "critical_count": 70,
+  "high_count": 89,
+  "medium_count": 114,
+  "low_count": 39,
+  "ddos_nodes": 21,
+  "latency_nodes": 187,
+  "mismatch_nodes": 104,
+  "infected_nodes": 70,
+  "top_offenders": [
+    { "node_id": 80,  "alert_count": 4 },
+    { "node_id": 338, "alert_count": 3 }
+  ],
+  "alerts": [ "..." ]
+}
+```
+
+---
+
+## Key Design Decisions
+
+### 1. Status Truth — HTTP over JSON
+Every single log entry has `json_status = "OPERATIONAL"` — this is the Shadow Controller's
+deception. The pipeline **never trusts json_status**. HTTP response codes are ground truth:
+
+| HTTP Code | Real Meaning |
+|-----------|-------------|
+| 200 | HEALTHY |
+| 206 | PARTIAL — partial content hijack signal |
+| 429 | THROTTLED — DDoS indicator |
+
+### 2. Schema Rotation at log_id = 5000
+The load metric column rotates mid-stream with no signal in the log data itself:
+- **Schema v1** (log_id 0–4999): active column = `load_val`
+- **Schema v2** (log_id 5000–9999): active column = `L_V1`
+
+The ingestion layer detects this from `schema_config.csv` and tags every event correctly.
+
+### 3. Serial Number Decoding
+Node serial numbers are Base64-encoded and hidden inside the `user_agent` field:
+```
+user_agent: "AEGIS-Node/2.0 (Linux) U04tOTI4MA=="
+                                     └── base64 → "SN-9280"
+```
+Decoded at ingestion time and stored as `serial_number` in the `nodes` table.
+
+### 4. Two-Layer Detection
+- **Rule engine** — deterministic, fast, explainable. Catches known patterns (DDoS, mismatch, infected nodes).
+- **IsolationForest** — catches unknown anomalies the rules don't cover. Trained on `response_time_ms`, `http_response_code`, and `effective_load`.
+
+### 5. Caching
+Redis caches `/api/city-map` and `/api/heatmap` for 30 seconds to support fast dashboard refresh without hammering PostgreSQL.
+
+---
+
+## Dataset Intelligence
+
+| Dataset | Rows | Key Anomaly |
+|---------|------|-------------|
+| `system_logs.csv` | 10,000 | `json_status` always OPERATIONAL — lies about 1,441 anomalous events |
+| `node_registry.csv` | 500 nodes | 70 infected (14%) — serials hidden in Base64 |
+| `schema_config.csv` | 2 versions | Silent column rotation at log_id 5000 |
+
+### Threat Signals Found
+
+| Signal | Count | Detector |
+|--------|-------|----------|
+| HTTP 429 (DDoS) | 727 events | DDoS Detector |
+| HTTP 206 (Partial hijack) | 714 events | Status Mismatch Detector |
+| Latency anomalies >200ms | 1,441 events | Latency Detector |
+| Status mismatches | 727 nodes | Status Mismatch Detector |
+| Known infected nodes active | 70 nodes | Infected Node Detector |
+
+---
+
+## Running Tests
 
 ```bash
 cd aegis_backend
-docker-compose up --build -d
-```
-*This will spin up the FastAPI Brain, a private PostgreSQL instance, and a dedicated Redis cache.*
-
----
-
-### Step 2: Initialize the Local Sector 🧹
-The containers are now live, but the local database is empty. You must populate it with the initial node fabric and telemetry data.
-
-```bash
-# Enter the API container to run the initialization scripts
-docker exec -it aegis_api sh
-
-# Inside the container, run the baseline commands:
-python reset_db.py
-python scripts/seed_db.py
-python scripts/calibrate_sequences.py
-exit
+pip install pytest pytest-asyncio
+pytest tests/test_detection_engine.py -v
 ```
 
----
-
-### Step 3: Launch the Cyberpunk Dashboard 🏙️
-With the backend active at `http://localhost:8000`, launch the frontend from the **Root Project Folder**:
-
-```bash
-# On your host machine (root folder)
-python -m http.server 8080
-```
-Open your browser at: `http://localhost:8080/dashboard.html`
+Tests use mock SQLAlchemy sessions — no database or Docker required to run them.
 
 ---
 
-## 🌐 Live Deployment & Disclaimer
+## Environment Variables
 
-The AEGIS Defense System frontend is actively hosted at:
-**[https://aegis-cyber-infrastructure-defense.vercel.app/](https://aegis-cyber-infrastructure-defense.vercel.app/)**
-
-> [!WARNING]
-> **Infrastructure Notice:** The backend intelligence, database, and telemetry pulse are currently hosted on **Render's Free Tier** services. As a result, computing resources are limited. You may experience noticeable latency, occasional data-sync inaccuracies, or temporary service hibernation if the server powers down due to inactivity.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgresql+asyncpg://...` | PostgreSQL connection string |
+| `REDIS_URL` | `redis://localhost:6379` | Redis connection string |
+| `SCHEMA_ROTATION_LOG_ID` | `5000` | log_id where schema switches v1 → v2 |
+| `ANOMALY_THRESHOLD` | `-0.1` | IsolationForest decision boundary |
+| `DDOS_THRESHOLD` | `5` | Min 429s per node before DDoS alert fires |
+| `LATENCY_THRESHOLD_MS` | `200` | Response time above which latency is anomalous |
 
 ---
-**Mission Complete. Nexus City is Secured.** 🏆
+
+## Live Demo
+
+Frontend: [aegis-cyber-infrastructure-defense.vercel.app](https://aegis-cyber-infrastructure-defense.vercel.app)
