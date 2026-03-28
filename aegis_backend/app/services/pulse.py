@@ -105,7 +105,8 @@ async def forensic_autonomous_pulse(app):
                         def __init__(self, d):
                             self.response_time_ms = d["response_time_ms"]
                             self.http_response_code = d["http_response_code"]
-                            self.effective_load = d["_eff_load"]
+                            self.load_val = d["load_val"]
+                            self.l_v1 = d["l_v1"]
                     
                     logs_for_ml = [MockLog(d) for d in batch_data]
                     ml_results = score_log_batch(app.state.models, logs_for_ml, settings.ANOMALY_THRESHOLD)
