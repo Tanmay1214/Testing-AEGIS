@@ -332,48 +332,44 @@ async def get_dashboard_state(session: AsyncSession, full: bool = False) -> Dash
     )
     total_anomalies = (await session.execute(total_anomalies_stmt)).scalar() or 0
     
-    # 3. Nodes (Forensic Map + Registry)
-    nodes_stmt = select(Node)
-    nodes_rows = (await session.execute(nodes_stmt)).scalars().all()
-    
-    # Latest status for each node
-    latest_logs_subq = (
-        select(
-            SystemLog.node_id,
-            func.max(SystemLog.log_id).label("max_id")
-        ).group_by(SystemLog.node_id).subquery()
-    )
-    status_stmt = select(SystemLog).join(
-        latest_logs_subq, 
-        (SystemLog.node_id == latest_logs_subq.c.node_id) & (SystemLog.log_id == latest_logs_subq.c.max_id)
-    )
-    statuses = {s.node_id: s for s in (await session.execute(status_stmt)).scalars().all()}
-
-    # 2. Identify nodes with anomalies in the current window (Hard-Sync)
-    inf_stmt = select(func.distinct(AnomalyRecord.node_id)).where(AnomalyRecord.log_id >= window_start_id)
-    inf_nodes = set((await session.execute(inf_stmt)).scalars().all())
-
-    import random # for visual variety if pos not set
-    dashboard_nodes = []
-    for n in nodes_rows:
-        s = statuses.get(n.node_uuid)
-        # Always send status updates; only send heavy metadata (pos, serial, ua) if full=True
-        node_data = {
-            "id": n.node_uuid,
-            "is_infected": (n.node_uuid in inf_nodes),
-            "conflict_detected": False,
-            "last_http_code": s.http_response_code if s else 200,
-            "reported_json": s.json_status if s else "OPERATIONAL",
-        }
+    # 3. Nodes (Forensic Map + Registry) - STRATIFIED LOAD
+    dashboard_nodes = None
+    if full:
+        nodes_stmt = select(Node)
+        nodes_rows = (await session.execute(nodes_stmt)).scalars().all()
         
-        if full:
-            node_data.update({
+        # Latest status for each node
+        latest_logs_subq = (
+            select(
+                SystemLog.node_id,
+                func.max(SystemLog.log_id).label("max_id")
+            ).group_by(SystemLog.node_id).subquery()
+        )
+        status_stmt = select(SystemLog).join(
+            latest_logs_subq, 
+            (SystemLog.node_id == latest_logs_subq.c.node_id) & (SystemLog.log_id == latest_logs_subq.c.max_id)
+        )
+        statuses = {s.node_id: s for s in (await session.execute(status_stmt)).scalars().all()}
+
+        # 2. Identify nodes with anomalies in the current window (Hard-Sync)
+        inf_nodes_stmt = select(func.distinct(AnomalyRecord.node_id)).where(AnomalyRecord.log_id >= window_start_id)
+        inf_nodes = set((await session.execute(inf_nodes_stmt)).scalars().all())
+
+        import random # for visual variety if pos not set
+        dashboard_nodes = []
+        for n in nodes_rows:
+            s = statuses.get(n.node_uuid)
+            node_data = {
+                "id": n.node_uuid,
+                "is_infected": (n.node_uuid in inf_nodes),
+                "conflict_detected": False,
+                "last_http_code": s.http_response_code if s else 200,
+                "reported_json": s.json_status if s else "OPERATIONAL",
                 "pos": {"x": getattr(n, 'pos_x', random.uniform(5, 95)), "y": getattr(n, 'pos_y', random.uniform(5, 95))},
                 "decoded_serial": n.serial_number,
                 "encoded_ua": n.user_agent,
-            })
-        
-        dashboard_nodes.append(DashboardNode(**node_data))
+            }
+            dashboard_nodes.append(DashboardNode(**node_data))
 
     # 4. Heatmap
     heatmap_data = await get_heatmap(session)

@@ -187,6 +187,6 @@ class LogEntry(BaseModel):
 class DashboardAggregationResponse(BaseModel):
     metadata: DashboardMetadata
     schema_engine: SchemaEngineState
-    nodes: list[DashboardNode]
+    nodes: list[DashboardNode] | None = None
     heatmap: list[dict]
     terminal_logs: list[LogEntry]
