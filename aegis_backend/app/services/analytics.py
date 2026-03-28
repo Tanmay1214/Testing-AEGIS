@@ -310,15 +310,15 @@ async def get_dashboard_state(session: AsyncSession, full: bool = False) -> Dash
     Minimizes frontend round-trips for the Cyberpunk Dashboard.
     full: If True, includes static/heavy node metadata (pos, serial, ua).
     """
-    # 1. Metadata
-    total_logs_stmt = select(func.count(SystemLog.log_id))
-    total_logs = (await session.execute(total_logs_stmt)).scalar() or 0
+    # 1. Metadata & Master Sync
+    max_id_stmt = select(func.max(SystemLog.log_id))
+    current_max_id = (await session.execute(max_id_stmt)).scalar() or 0
     
     # 2. Schema State
     schema_info = await get_schema_console(session)
 
-    # 2. Active Threats (Real count from AnomalyRecord table, filtered by current 5000-log window)
-    window_start_id = (total_logs // 5000) * 5000
+    # 3. Active Threats (Filtered by synced Master Window)
+    window_start_id = (current_max_id // 5000) * 5000
     
     active_threats_stmt = (
         select(func.count(func.distinct(AnomalyRecord.node_id)))
@@ -397,7 +397,7 @@ async def get_dashboard_state(session: AsyncSession, full: bool = False) -> Dash
         metadata=DashboardMetadata(
             system_time=int(datetime.now().timestamp()),
             latest_log_timestamp=latest_logs[0].ingested_at.isoformat() if latest_logs and latest_logs[0].ingested_at else _now().isoformat(),
-            total_logs_processed=total_logs,
+            total_logs_processed=current_max_id,
             active_threats=active_threats,
             total_anomalies=total_anomalies,
             status="OPERATIONAL_SYNCED_STRATIFIED"

@@ -136,5 +136,5 @@ async def forensic_autonomous_pulse(app):
             await asyncio.sleep(10) # Heavy backoff on error
 
         iteration += 1
-        await asyncio.sleep(2.0) # Cadence: 25 logs/sec (Conservative for Free Tier)
+        await asyncio.sleep(0.5) # Overclocked Cadence: 100 logs/sec (50 per batch)
 
