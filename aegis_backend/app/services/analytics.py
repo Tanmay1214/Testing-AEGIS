@@ -405,7 +405,7 @@ async def get_dashboard_state(session: AsyncSession, full: bool = False) -> Dash
         schema_engine=SchemaEngineState(
             current_version=schema_info.current_version,
             active_column=schema_info.current_column,
-            rotation_timer=f"-{(5000 - (total_logs % 5000)) if (total_logs % 5000) != 0 else 5000:04d}_PKTS",
+            rotation_timer=f"-{(5000 - (current_max_id % 5000)) if (current_max_id % 5000) != 0 else 5000:04d}_PKTS",
             sync_status=f"{schema_info.current_column}_LOCKED"
         ),
         nodes=dashboard_nodes,
