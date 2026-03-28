@@ -129,13 +129,13 @@ python -m http.server 8080
 1. Navigate to: `http://localhost:8080`
 2. You should now see the Cyberpunk AEGIS Terminal, updating autonomously with real-time analytics mapped directly from your cloud database!
 
----
+## 🌐 Live Deployment & Disclaimer
 
-## ☁️ Quick Cloud Re-Deployment (Optional)
-If you wish to deploy this entire architecture natively to **Render**, the project contains a definitive `render.yaml` Blueprint.
-1. Connect this GitHub repository to Render using the **"New Blueprint"** option.
-2. Provide your existing **Redis URL** in the environment prompts.
-3. Once the build finishes, manually update the `DATABASE_URL` environment variable within the Render Dashboard to point to your new External Postgres endpoint.
+The AEGIS Defense System frontend is actively hosted at:
+**[https://aegis-cyber-infrastructure-defense.vercel.app/](https://aegis-cyber-infrastructure-defense.vercel.app/)**
+
+> [!WARNING]
+> **Infrastructure Notice:** The backend intelligence, database, and telemetry pulse are currently hosted on **Render's Free Tier** services. As a result, computing resources are limited. You may experience noticeable latency, occasional data-sync inaccuracies, or temporary service hibernation if the server powers down due to inactivity. This deployment represents the architectural proof-of-concept rather than a scaled enterprise environment.
 
 ---
 **Mission Complete. Nexus City is Secured.** 🏆
