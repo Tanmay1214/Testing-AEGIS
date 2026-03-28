@@ -520,10 +520,6 @@ function updatePacketCounter() {
 function triggerSchemaRotation(newVersion) {
     activeSchemaVersion = newVersion;
     
-    // TACTICAL STATE FLUSH: Wipe infection flags across 500 nodes locally
-    if (dashboardData && dashboardData.nodes) {
-        dashboardData.nodes.forEach(n => { n.is_infected = false; n.last_http_code = 200; });
-    }
     lastAnomalyNodeIds = new Set();
     
     // VISUAL GLITCH
