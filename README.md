@@ -98,7 +98,7 @@ Launch the frontend from the **Root Project Folder**:
 # On your host machine (root folder)
 python -m http.server 8080
 ```
-Open: `https://aegis-api-65i8.onrender.com/dashboard.html`
+Open: `https://aegis-api-65i8.onrender.com/`
 ---
 ## 📡 API Endpoints
 | Method | Endpoint | Description |
