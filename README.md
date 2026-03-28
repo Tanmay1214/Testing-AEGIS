@@ -52,103 +52,52 @@ Powered by `SQLAlchemy` combined with the `asyncpg` driver, the API is entirely 
 
 ---
 
-## 🚀 Manual Deployment & Setup Guide
+## 🚀 Local Deployment (Docker-First) 🐳
 
-This guide walks you through deploying the AEGIS system manually, from setting up the required cloud resources to spinning up the terminal.
+For maximum accuracy, performance, and efficiency, the AEGIS system is designed to run in a fully containerized environment using **Docker**. This ensures a literal "One-Command" setup with local PostgreSQL and Redis instances, providing zero-latency data ingestion.
 
 ### Prerequisites
-- Python 3.10+
-- Git
----
+- **Docker Desktop** installed and running.
 
 ---
 
-### Step 1: Clone & Configure Environment 🔐
+### Step 1: Engage the Mission Stack 🌀
+From the root of the project, navigate to the backend and launch the entire defense architecture:
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Tanmay1214/Code-Blooded_AEGIS-Cyber-Infrastructure-Defense.git
-   cd Code-Blooded_AEGIS-Cyber-Infrastructure-Defense
-   ```
-
-2. Create a `.env` file inside the `aegis_backend/` folder based on `.env.example`:
-   ```bash
-   cd aegis_backend
-   # Create a `.env` file and insert the following:
-   ```
-
-   **Use this `.env` content:**
-   ```env
-   DATABASE_URL="postgresql://aegis_db_5o8g_user:dK8r3ilL2UcH4nVjVh8VfYIH7LdUM8cW@dpg-d73bbsfkijhs73debtrg-a.oregon-postgres.render.com/aegis_db_5o8g"
-
-   # Use your Upstash Redis URL for the forensic heartbeat cache:
-   REDIS_URL="redis-cli --tls -u redis://default:gQAAAAAAAVBaAAIncDE0MzJjM2RhZDdlOTM0NDQxOTRjOWMzNTE5OGY1Y2ZkNHAxODYxMDY@meet-teal-86106.upstash.io:6379"
-
-   # --- Local Intelligence Settings ---
-   DEBUG=true
-   APP_NAME="AEGIS Defense System [LOCAL_SECTOR]"
-   APP_VERSION="1.0.0"
-
-   #    --- ML Thresholds ---
-   ANOMALY_THRESHOLD=0.0
-   ISOLATION_FOREST_CONTAMINATION=0.08
-
-   # --- Paths (Default for Aegis_backend structure) ---
-   NODE_REGISTRY_PATH="data/node_registry.csv"
-   SYSTEM_LOGS_PATH="data/system_logs.csv"
-   SCHEMA_CONFIG_PATH="data/schema_config.csv"
-   ```
-
----
-
-### Step 2: Initialize the Database (Surgical Reset & Seed) 🧹
-For a 100% clean mission, wipe the tables and rebuild the data registry from scratch.
-
-*Ensure you are actively inside the `aegis_backend` directory.*
 ```bash
-# 1. Setup a python virtual environment
-python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
+cd aegis_backend
+docker-compose up --build -d
+```
+*This will spin up the FastAPI Brain, a private PostgreSQL instance, and a dedicated Redis cache.*
 
-# 2. Install Dependencies
-pip install -r requirements.txt
+---
 
-# 3. Wipe any existing data (Optional/For clean start)
+### Step 2: Initialize the Local Sector 🧹
+The containers are now live, but the local database is empty. You must populate it with the initial node fabric and telemetry data.
+
+```bash
+# Enter the API container to run the initialization scripts
+docker exec -it aegis_api sh
+
+# Inside the container, run the baseline commands:
 python reset_db.py
-
-# 4. Seed the Database with initial nodes and 10,000 logs
 python scripts/seed_db.py
-
-# 5. Calibrate the Sequences to fix auto-incrementing IDs
 python scripts/calibrate_sequences.py
+exit
 ```
 
 ---
 
-### Step 3: Engage the Mission Backend 🛰️
-Start the FastAPI server. This will also trigger the self-sustaining 24/7 **Autonomous Pulse**.
+### Step 3: Launch the Cyberpunk Dashboard 🏙️
+With the backend active at `http://localhost:8000`, launch the frontend from the **Root Project Folder**:
 
 ```bash
-uvicorn main:app --reload
-```
-*Your backend intelligence is now online at `http://localhost:8000`. Watch your terminal as the pulses flow automatically!*
-
----
-
-### Step 4: Launch the Cyberpunk Dashboard 💻
-You can launch the frontend using any basic HTTP server from the root of the project.
-
-Open a new terminal session, ensuring you are in the **Root Project Folder**:
-```bash
-# Launch a built-in Python Web Server
+# On your host machine (root folder)
 python -m http.server 8080
 ```
+Open your browser at: `http://localhost:8080/dashboard.html`
 
-1. Navigate to: `http://localhost:8080`
-2. You should now see the Cyberpunk AEGIS Terminal, updating autonomously with real-time analytics mapped directly from your cloud database!
+---
 
 ## 🌐 Live Deployment & Disclaimer
 

@@ -32,5 +32,21 @@ services:
       timeout: 3s
       retries: 5
 
+  api:
+    build: .
+    container_name: aegis_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aegis:aegis_secret@postgres:5432/aegis_db
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   aegis_pg_data:
