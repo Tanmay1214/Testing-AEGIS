@@ -14,7 +14,7 @@
 4. **Intelligent Schema Rotation & Master Sync** 🔄  
    The ingestion engine handles high-velocity `V1`/`V2` schema shifts, perfectly synchronized using **Master Sequence ID** windowing to ensure 100% accuracy in threat counts and glitch triggers.
 5. **Stratified Telemetry Protocol** 📡
-   Optimized bandwidth usage by transmitting heavy node metadata once per handshake, then shifting to a lightweight "Heartbeat" protocol for 100 log/sec dashboard reactivity.
+   Optimized bandwidth usage by transmitting heavy node metadata once per handshake, then shifting to a lightweight "Heartbeat" protocol for 100 log/request dashboard reactivity.
 ---
 ## 🏗️ Architecture
 ```
