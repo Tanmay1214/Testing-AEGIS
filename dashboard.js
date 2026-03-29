@@ -67,8 +67,11 @@ if (typeof tailwind !== 'undefined') {
 }
 
 // 2. Core State & Fetching
-const API_BASE = window.location.origin.includes('localhost') 
-    ? "http://localhost:8000/api" 
+const API_BASE = (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+)
+    ? "http://127.0.0.1:8000/api" 
     : "https://aegis-api-65i8.onrender.com/api"; 
 let dashboardData = null;
 let visibleNodeLimit = 50;
@@ -88,7 +91,21 @@ let lastAnomalyNodeIds = new Set();
 async function fetchDashboardData() {
     try {
         const url = `${API_BASE}/dashboard-aggregator${isFirstLoad ? '?full=true' : ''}`;
-        const response = await fetch(url);
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('access_token');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
         const data = await response.json();
 
         if (isFirstLoad) {
@@ -196,6 +213,10 @@ function drawNodes() {
     const nodes = dashboardData.nodes;
     const nodeCountEl = document.getElementById('nodeCount');
     if (nodeCountEl) nodeCountEl.innerText = `ACTIVE_NODES: ${nodes.length}`;
+    
+    // Update auxiliary node counter if it exists (panel 1 subheader)
+    const auxNodeCount = document.querySelector('.text-primary-container.px-2');
+    if (auxNodeCount) auxNodeCount.innerText = `ACTIVE_NODES: ${nodes.length}`;
 
     nodes.forEach(node => {
         const lng = 75.60 + (node.pos.x / 100) * 0.35; 

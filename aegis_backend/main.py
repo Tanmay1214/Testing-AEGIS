@@ -27,9 +27,14 @@ async def lifespan(app: FastAPI):
     # ── Startup ──────────────────────────────────────────────
     logger.info("AEGIS Backend starting up...")
 
-    # Create DB tables (idempotent)
-    await create_all_tables()
-    logger.info("Database tables ready")
+    # Create DB tables (idempotent) — graceful degradation if DB unavailable
+    try:
+        await create_all_tables()
+        logger.info("Database tables ready")
+        app.state.db_available = True
+    except Exception as e:
+        logger.warning("DB unavailable at startup — fallback mode. Error: %s", e)
+        app.state.db_available = False
 
     # Load trained ML models
     try:

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AEGIS_SECURE_AUTH // RESTRICTED ACCESS</title>
+  <meta name="description" content="AEGIS Cyber Infrastructure Defense — Secure Authentication Terminal" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cyan: #00FBFB;
+      --cyan-dim: #00DDDD;
+      --cyan-faint: rgba(0, 251, 251, 0.08);
+      --cyan-glow: rgba(0, 251, 251, 0.35);
+      --pink: #E00460;
+      --pink-glow: rgba(224, 4, 96, 0.35);
+      --bg: #050505;
+      --surface: #0a0a0a;
+      --surface-alt: #111;
+      --text: #e5e2e1;
+      --text-dim: #839493;
+    }
+
+    html, body {
+      height: 100%;
+      background-color: var(--bg);
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── CRT & Scanline Overlay ── */
+    .crt-overlay {
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.015), rgba(0, 0, 255, 0.04));
+      background-size: 100% 3px, 3px 100%;
+      pointer-events: none;
+      z-index: 200;
+      animation: crt-flicker 8s infinite;
+    }
+
+    @keyframes crt-flicker {
+      0%, 97%, 100% { opacity: 1; }
+      98% { opacity: 0.94; }
+      99% { opacity: 0.97; }
+    }
+
+    /* ── Animated Grid Background ── */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 251, 251, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 251, 251, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+    }
+
+    /* ── Corner Decorations ── */
+    .corner-deco {
+      position: fixed;
+      width: 120px;
+      height: 120px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .corner-deco.tl { top: 20px; left: 20px;
+      border-top: 1px solid var(--cyan); border-left: 1px solid var(--cyan); }
+    .corner-deco.tr { top: 20px; right: 20px;
+      border-top: 1px solid var(--cyan); border-right: 1px solid var(--cyan); }
+    .corner-deco.bl { bottom: 20px; left: 20px;
+      border-bottom: 1px solid var(--cyan); border-left: 1px solid var(--cyan); }
+    .corner-deco.br { bottom: 20px; right: 20px;
+      border-bottom: 1px solid var(--cyan); border-right: 1px solid var(--cyan); }
+
+    /* ── Floating Status Info (top) ── */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 24px;
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(0, 251, 251, 0.08);
+      z-index: 10;
+    }
+    .top-bar .status-dot {
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--cyan);
+      margin-right: 6px;
+      animation: blink 1.5s steps(1) infinite;
+      box-shadow: 0 0 4px var(--cyan);
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Main Container ── */
+    .login-wrapper {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* ── The Card ── */
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(8, 8, 8, 0.92);
+      border: 1px solid var(--cyan);
+      box-shadow: 0 0 40px var(--cyan-glow), inset 0 0 60px rgba(0, 251, 251, 0.02);
+      position: relative;
+      padding: 0;
+      overflow: hidden;
+      animation: card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Corner brackets on card */
+    .card-corner {
+      position: absolute;
+      width: 14px; height: 14px;
+    }
+    .card-corner.tl { top: -1px; left: -1px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+    .card-corner.tr { top: -1px; right: -1px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+    .card-corner.bl { bottom: -1px; left: -1px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+    .card-corner.br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+
+    /* ── Card Header Strip ── */
+    .card-header {
+      background: var(--cyan);
+      padding: 8px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-header-title {
+      font-size: 10px;
+      font-weight: 800;
+      color: #002020;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .card-header-dots { display: flex; gap: 6px; }
+    .card-header-dots span {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border: 1px solid #002020;
+    }
+    .card-header-dots span:last-child { background: #002020; }
+
+    /* ── Card Body ── */
+    .card-body { padding: 32px 28px 28px; }
+
+    /* ── ASCII Logo ── */
+    .ascii-logo {
+      font-size: 0.38rem;
+      line-height: 1.15;
+      text-align: center;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan-glow);
+      margin-bottom: 20px;
+      user-select: none;
+      opacity: 0;
+      animation: fade-in 0.5s 0.3s ease forwards;
+    }
+
+    @keyframes fade-in { to { opacity: 1; } }
+
+    .auth-subtitle {
+      text-align: center;
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(0, 251, 251, 0.1);
+    }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 18px; }
+
+    .form-label {
+      display: block;
+      font-size: 9px;
+      color: var(--cyan);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--cyan-faint);
+      border: 1px solid rgba(0, 251, 251, 0.4);
+      color: var(--cyan);
+      padding: 11px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      caret-color: var(--cyan);
+    }
+    .form-input::placeholder { color: rgba(0, 251, 251, 0.25); font-size: 11px; }
+    .form-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    /* ── Error Message ── */
+    .error-msg {
+      display: none;
+      text-align: center;
+      font-size: 10px;
+      color: var(--pink);
+      text-shadow: 0 0 6px var(--pink-glow);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 10px;
+      border: 1px solid rgba(224, 4, 96, 0.3);
+      background: rgba(224, 4, 96, 0.05);
+      margin-bottom: 14px;
+      animation: shake 0.3s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* ── Submit Button ── */
+    .btn-auth {
+      width: 100%;
+      background: var(--cyan);
+      color: #001a1a;
+      border: none;
+      padding: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: box-shadow 0.2s, background 0.15s, color 0.15s;
+      margin-top: 6px;
+    }
+    .btn-auth:hover:not(:disabled) {
+      box-shadow: 0 0 24px var(--cyan-glow);
+    }
+    .btn-auth:active:not(:disabled) {
+      background: var(--cyan-dim);
+    }
+    .btn-auth:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ── Footer Text ── */
+    .card-footer {
+      padding: 10px 20px 14px;
+      border-top: 1px solid rgba(0, 251, 251, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-footer span {
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .badge-secure {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 8px;
+      color: var(--cyan);
+      letter-spacing: 0.12em;
+    }
+    .badge-secure::before {
+      content: '';
+      display: inline-block;
+      width: 5px; height: 5px;
+      background: var(--cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 4px var(--cyan);
+    }
+
+    /* ── Bottom scan line in card ── */
+    .scan-beam {
+      position: absolute;
+      top: -4px; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0;
+      animation: scan-sweep 4s 1s ease-in-out infinite;
+    }
+    @keyframes scan-sweep {
+      0%   { top: 0; opacity: 0.7; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* ── Bottom stat bar ── */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 24px;
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      border-top: 1px solid rgba(0, 251, 251, 0.06);
+      z-index: 10;
+    }
+    .bottom-bar .tick { color: rgba(0, 251, 251, 0.4); }
+  </style>
+</head>
+<body>
+  <!-- CRT effect overlay -->
+  <div class="crt-overlay" aria-hidden="true"></div>
+
+  <!-- Animated grid -->
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <!-- Corner decorations -->
+  <div class="corner-deco tl" aria-hidden="true"></div>
+  <div class="corner-deco tr" aria-hidden="true"></div>
+  <div class="corner-deco bl" aria-hidden="true"></div>
+  <div class="corner-deco br" aria-hidden="true"></div>
+
+  <!-- Top status bar -->
+  <div class="top-bar" aria-hidden="true">
+    <span><span class="status-dot"></span>AEGIS_CORE v4.2 // NEURAL_OS_v8.4</span>
+    <span id="top-clock">-- : -- : --</span>
+    <span>ENCRYPTION: AES-256-GCM // JWT HS256</span>
+  </div>
+
+  <!-- Main login wrapper -->
+  <main class="login-wrapper" id="main-content">
+    <div class="auth-card" role="main">
+      <!-- Scan beam animation -->
+      <div class="scan-beam" aria-hidden="true"></div>
+
+      <!-- Corner brackets -->
+      <div class="card-corner tl" aria-hidden="true"></div>
+      <div class="card-corner tr" aria-hidden="true"></div>
+      <div class="card-corner bl" aria-hidden="true"></div>
+      <div class="card-corner br" aria-hidden="true"></div>
+
+      <!-- Header strip -->
+      <div class="card-header">
+        <span class="card-header-title">&gt; AEGIS_SECURE_AUTH</span>
+        <div class="card-header-dots" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="card-body">
+        <!-- ASCII Logo -->
+        <pre class="ascii-logo" aria-label="AEGIS Logo">
+ █████  ███████  ██████  ██ ███████
+██   ██ ██      ██       ██ ██
+███████ █████   ██   ███ ██ ███████
+██   ██ ██      ██    ██ ██      ██
+██   ██ ███████  ██████  ██ ███████
+        </pre>
+
+        <p class="auth-subtitle">Restricted Access Terminal — Authenticate to Proceed</p>
+
+        <!-- Login Form -->
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="username">Operator ID</label>
+            <input
+              id="username"
+              class="form-input"
+              type="text"
+              name="username"
+              autocomplete="username"
+              placeholder="Enter operator ID..."
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Passcode</label>
+            <input
+              id="password"
+              class="form-input"
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="Enter passcode..."
+              required
+            />
+          </div>
+
+          <div id="error-msg" class="error-msg" role="alert" aria-live="polite">
+            ACCESS DENIED — Invalid Credentials
+          </div>
+
+          <button type="submit" id="login-btn" class="btn-auth">
+            &gt;&gt; AUTHENTICATE &lt;&lt;
+          </button>
+        </form>
+      </div>
+
+      <!-- Footer -->
+      <div class="card-footer">
+        <span>UNIT: CODE_BLOODED // LNMIIT JAIPUR</span>
+        <span class="badge-secure">SECURE_CHANNEL</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom status bar -->
+  <div class="bottom-bar" aria-hidden="true">
+    <span class="tick">///</span>
+    <span>NEXUS_CITY_DEFENSE_GRID // ONLINE</span>
+    <span id="bot-lat">LAT: 0000MS</span>
+    <span class="tick">///</span>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    // Clock update
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      const el = document.getElementById('top-clock');
+      if (el) el.textContent = `${h} : ${m} : ${s}`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Simulated latency ticker
+    function updateLatency() {
+      const el = document.getElementById('bot-lat');
+      if (el) el.textContent = `LAT: ${(Math.random() * 8 + 2).toFixed(1)}MS`;
+    }
+    setInterval(updateLatency, 2000);
+  </script>
+</body>
+</html>

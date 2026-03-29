@@ -5,7 +5,8 @@ FastAPI route handlers for all AEGIS backend endpoints.
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Cookie, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Cookie, Query, Request, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,6 +29,7 @@ from app.services.analytics import (
     get_dashboard_state,
 )
 from app.services.forensics import detect_cloned_identities, ClonedIdentityReport
+from app.services.auth import get_current_user, create_access_token, authenticate_user
 try:
     from app.ml.detector import score_log_entry, score_log_batch
 except ImportError:
@@ -39,6 +41,25 @@ except ImportError:
 logger = logging.getLogger("aegis.api")
 settings = get_settings()
 router = APIRouter(prefix="/api")
+
+
+# ─── Authentication ───────────────────────────────────────────────────────────
+
+@router.post("/login", tags=["Auth"])
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    Authenticate with username+password. Returns a JWT Bearer token.
+    Credentials: admin / aegis123
+    """
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = create_access_token(data={"sub": user})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 # ─── Health ───────────────────────────────────────────────────────────────────
@@ -81,6 +102,7 @@ async def list_nodes(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     session: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user),
 ):
     """
     Returns all nodes with Base64-decoded serial numbers.
@@ -116,7 +138,10 @@ async def city_map(session: AsyncSession = Depends(get_db)):
 # ─── Sleeper Heatmap ─────────────────────────────────────────────────────────
 
 @router.get("/heatmap", response_model=HeatmapResponse, tags=["Heatmap"])
-async def sleeper_heatmap(session: AsyncSession = Depends(get_db)):
+async def sleeper_heatmap(
+    session: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user),
+):
     """
     Response-time heatmap for identifying nodes with hidden malware.
     Nodes with high latency + many anomaly hits are flagged as HIGH/CRITICAL risk.
@@ -153,6 +178,7 @@ async def list_anomalies(
     skip: int = Query(0, ge=0),
     limit: int = Query(200, ge=1, le=1000),
     session: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user),
 ):
     """
     Returns all ML-detected anomaly records, sorted by anomaly score (most suspicious first).
@@ -334,7 +360,11 @@ async def cloned_identities(session: AsyncSession = Depends(get_db)):
 
 
 @router.get("/dashboard-aggregator", response_model=DashboardAggregationResponse, tags=["Analytics"], response_model_exclude_none=True)
-async def dashboard_aggregator(full: bool = Query(False), session: AsyncSession = Depends(get_db)):
+async def dashboard_aggregator(
+    full: bool = Query(False),
+    session: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user),
+):
     """
     Unified dashboard state for the Cyberpunk UI.
     Aggregates metadata, schema, nodes, heatmap, and logs.
